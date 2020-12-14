@@ -25,6 +25,8 @@ par(mar = c(8, 4.1, 4.1, 2.1))
 barplot(rev(sort(table(foram.data$db.source)))/1000, las = 2, xlab = "", col = "navy", ylab = expression(paste("Number of records (", "10"^"3", ")")), mgp = c(2.5, 1, 0))
 dev.off()
 
+nrow(foram.data)
+
 # totals
 table(foram.data$db.source)
 
@@ -37,12 +39,12 @@ table(foram.data$age < 23.03)
 table(foram.data$age < 23.03, foram.data$db.source)
 
 # Latitude
-table(foram.data$pal.lat < 30)
-table(foram.data$pal.lat < 60 & foram.data$pal.lat >= 30)
-table(foram.data$pal.lat >= 60)
-table(foram.data$pal.lat < 30, foram.data$db.source)
-table(foram.data$pal.lat < 60 & foram.data$pal.lat >= 30 , foram.data$db.source)
-table(foram.data$pal.lat >= 60 , foram.data$db.source)
+table(abs(foram.data$pal.lat) < 30)
+table(abs(foram.data$pal.lat) < 60 & abs(foram.data$pal.lat) >= 30)
+table(abs(foram.data$pal.lat) >= 60)
+table(abs(foram.data$pal.lat) < 30, foram.data$db.source)
+table(abs(foram.data$pal.lat) < 60 & abs(foram.data$pal.lat) >= 30 , foram.data$db.source)
+table(abs(foram.data$pal.lat) >= 60 , foram.data$db.source)
 
 # Abundance
 table(foram.data$abun.units)
@@ -52,19 +54,31 @@ table(foram.data$abun.units, foram.data$db.source)
 load("Outputs/Neptune.RData")
 rm(neptune.orig)
 neptune$data <- merge(neptune$data, foram.ages, by.x = "species", by.y = "Species.name")
+nrow(neptune$data)
 table(neptune$data$`Macro/micro`)
 
 # Neogene/Paleogene
 table(neptune$data$age < 23.03)
 
 # Latitude
-table(neptune$data$pal.lat < 30)
-table(neptune$data$pal.lat < 60 & neptune$data$pal.lat >= 30)
-table(neptune$data$pal.lat >= 60)
+table(abs(neptune$data$pal.lat) < 30)
+table(abs(neptune$data$pal.lat) < 60 & abs(neptune$data$pal.lat) >= 30)
+table(abs(neptune$data$pal.lat) >= 60)
 
 # Abundance
 table(neptune$data$abun.units)
 
+# number of recognised species
+nrow(foram.ages)
+
+# number of species in triton
+length(unique(foram.data$species))
+
+# percentage
+length(unique(foram.data$species)) / nrow(foram.ages) * 100
+
+# rare / absent species
+sum(foram.data$species == "Dentoglobigerina juxtabinaiensis")
 
 # 3. Plots of records by age / lat ----------------------------------------
 
@@ -253,6 +267,67 @@ legend("bottomright", pch = 16, legend = c("Model", "Zones", "Interp", "mag", "i
 dev.off()
 
 
+
+# 7. Species completeness -------------------------------------------------
+# Species level data 
+# create the species level dataframe
+datasp <- foram.ages[, c("Species.name", "Macro/micro", "Start", "End")]
+names(datasp)[names(datasp) == "Species.name"] <- "species"
+datasp <- datasp[order(datasp$species), ]
+sp.ord <- sort(unique(foram.data$species))
+
+# populate it with database info
+datasp$n.occur <- 0
+datasp$n.occur[match(sp.ord, datasp$species)] <- table(foram.data$species)
+datasp$min.age[datasp$species %in% sp.ord] <- tapply(foram.data$age, foram.data$species, min, na.rm = TRUE)
+datasp$max.age[datasp$species %in% sp.ord] <- tapply(foram.data$age, foram.data$species, max, na.rm = TRUE)
+datasp$age.range <- datasp$max.age - datasp$min.age
+datasp$min.pal.lat[datasp$species %in% sp.ord] <- tapply(foram.data$pal.lat, foram.data$species, function(x) ifelse(sum(!is.na(x)) > 0, min(x, na.rm = TRUE), NA))
+datasp$max.pal.lat[datasp$species %in% sp.ord] <- tapply(foram.data$pal.lat, foram.data$species, function(x) ifelse(sum(!is.na(x)) > 0, max(x, na.rm = TRUE), NA))
+datasp$pal.lat.range <- datasp$max.pal.lat - datasp$min.pal.lat
+datasp$min.pal.long[datasp$species %in% sp.ord] <- tapply(foram.data$pal.long, foram.data$species, function(x) ifelse(sum(!is.na(x)) > 0, min(x, na.rm = TRUE), NA))
+datasp$max.pal.long[datasp$species %in% sp.ord] <- tapply(foram.data$pal.long, foram.data$species, function(x) ifelse(sum(!is.na(x)) > 0, max(x, na.rm = TRUE), NA))
+datasp$pal.long.range <- datasp$max.pal.long - datasp$min.pal.long
+datasp$nMa.rec <- tapply(foram.data$round.age, foram.data$species, function(x) length(unique(x)))[datasp$species]
+
+# consider fraction of data completeness at given bin widths
+summary(sapply(datasp$specName, age.frac, datasp, foram.data, 1))
+
+
+# fully trimmed dataset
+foram.data.full.trim <- foram.data[foram.data$Speciation - foram.data$age > 0, ]
+foram.data.full.trim <- foram.data.full.trim[foram.data.full.trim$Extinction - foram.data.full.trim$age < 0, ]
+
+# calculating species completeness with 1Ma bins
+tab.age <- tapply(foram.data.full.trim$round.age, foram.data.full.trim$species, function(x) length(unique(x)))
+datasp$nMa.rng <- 0
+datasp$nMa.rng[match(names(tab.age), datasp$species)] <- tab.age
+datasp$age.rng <- round(datasp$Start) - round(datasp$End) + 1
+datasp$frac.rng.1Ma <- datasp$nMa.rng / datasp$age.rng
+
+#at 0.5Ma bins
+foram.data.full.trim$round.age.0.5 <- round(foram.data.full.trim$age * 2) / 2
+tab.age.0.5 <- tapply(foram.data.full.trim$round.age.0.5, foram.data.full.trim$species, function(x) length(unique(x)))
+datasp$nMa.rng.0.5 <- 0
+datasp$nMa.rng.0.5[match(names(tab.age.0.5), datasp$species)] <- tab.age.0.5
+datasp$age.rng.0.5 <- round(datasp$Start * 2) - round(datasp$End * 2) + 1
+datasp$frac.rng.0.5Ma <- datasp$nMa.rng.0.5 / datasp$age.rng.0.5
+
+
+# number of species with at least one record (within their known time period)
+length(datasp$frac.rng.1Ma[datasp$nMa.rng > 0])
+# fraction of valid species
+length(datasp$frac.rng.1Ma[datasp$nMa.rng > 0]) / nrow(datasp)
+
+# completeness at 1Ma resolution
+summary(datasp$frac.rng.1Ma[datasp$nMa.rng > 0])
+sum(datasp$frac.rng.1Ma[datasp$nMa.rng > 0] == 1)
+sum(datasp$frac.rng.1Ma[datasp$nMa.rng > 0] == 1) / length(datasp$frac.rng.1Ma[datasp$nMa.rng >0])
+
+# completeness at 0.5Ma resolution
+summary(datasp$frac.rng.0.5Ma[datasp$nMa.rng.0.5 > 0])
+sum(datasp$frac.rng.0.5Ma[datasp$nMa.rng.0.5 > 0] == 1)
+sum(datasp$frac.rng.0.5Ma[datasp$nMa.rng.0.5 > 0] == 1) / length(datasp$frac.rng.0.5Ma[datasp$nMa.rng.0.5 >0])
 
 
 
