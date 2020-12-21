@@ -56,7 +56,10 @@ triton$rel.abun[triton$abun.units == "P/A"] <- NA
 
 summary(triton$rel.abun)
 
-# 3. Remove ages with large errors ---------------------------------------------------
+# 3. Update ages / remove those with large errors ---------------------------------------------------
+triton$age[triton$age.calc == "Orig" & (triton$year >= 2012 & !is.na(triton$year) | triton$db.source == "Neptune") & triton$age > 0] <- unlist(sapply(triton$age[triton$age.calc == "Orig" & (triton$year >= 2012 & !is.na(triton$year) | triton$db.source == "Neptune") & triton$age > 0], ts.conv, orig.ts = "GTS2012"))
+triton$age[triton$age.calc == "Orig" & (triton$year < 2012 & !is.na(triton$year) & triton$db.source != "Neptune") & triton$age > 0] <- unlist(sapply(triton$age[triton$age.calc == "Orig" & (triton$year < 2012 & !is.na(triton$year) & triton$db.source != "Neptune") & triton$age > 0], ts.conv))
+
 # if the zones are > 5Ma set to NA
 triton$age[triton$age.err > 5] <- NA
 # remove these
@@ -95,7 +98,6 @@ for (i in 1:66) {
     tmp <- pal.coord.round(pal.coord.dat[tmp.pal.rows,], model = "MATTHEWS2016")
     pal.coord.dat$pal.lat[tmp.pal.rows] <- tmp$paleolat
     pal.coord.dat$pal.long[tmp.pal.rows] <- tmp$paleolng
-    save(pal.coord.dat, file = paste("Outputs/Paleocoords/tmp.coord.add", i, ".RData", sep = ""))
   }
 }
 rm(tmp.pal.rows, i, tmp.pal.coord)

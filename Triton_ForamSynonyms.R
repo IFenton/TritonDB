@@ -12,7 +12,7 @@ compare <- function (forams.sample, micro = FALSE, st.age = NA, en.age = NA, age
   # load lookup tables
   library("openxlsx")
   path <- gsub("/[^/]*(Box|Dropbox).*/.*$", "", getwd())
-  forams.lookup <- read.xlsx("Data/ForamSynonyms.xlsx", sheet = "foramslookup")
+  forams.lookup <- read.xlsx("Data/PFdata.xlsx", sheet = "foramslookup")
   forams.lookup <- forams.lookup[,1:3]
   
   lookup.table <- function(lookup) {

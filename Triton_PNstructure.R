@@ -2405,7 +2405,7 @@ pan.PNstructure <- function(pan.data, input.init, choices = NULL, model = "MATTH
 
 
 # PNstructure for IODP ----------------------------
-iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEWS2016", pal.lat.full = TRUE, database.source = "IODP", iodp.info, rm.bk = FALSE, recalc.age = FALSE, chrons.full = all.chrons) {
+iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEWS2016", pal.lat.full = TRUE, database.source = "IODP", iodp.info, rm.bk = FALSE, recalc.age = FALSE, chrons.full = all.chrons, age.chron = NA, iodp.orig.data = NA) {
   # pal.lat.full only runs paleolat for the first 5 data points to check that the function is working / get the choices. 
   # load the relevant libraries
   require("svDialogs")
@@ -2423,94 +2423,100 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
     choices$sheets <- readline("Which sheets should be used? " ) # need readline to be able to get more than one sheet
     choices$sheets <- excel_sheets(file)[eval(parse(text = (choices$sheets)))] 
   }
-  for (j in choices$sheets)  {
-    tmp.data <- read_excel(file, sheet = j)
-    # if the column headings are numbers
-    if (!any(grepl("[A-z]", colnames(tmp.data)))) {
-      tmp.data <- read_excel(file, sheet = j, skip = 1)
-    }
-    # if the first row is still the column headings
-    if (length(grep("[\\(]", unlist(tmp.data[1,]))) == sum(!is.na(tmp.data[1,]))) {
-      names(tmp.data)[grepl(paste(gsub("\\.{3}[0-9]*$", "", names(tmp.data)[!is.na(tmp.data[1,])]), collapse = "|"), names(tmp.data))] <- gsub("\\.{3}[0-9]*$", "", names(tmp.data)[grepl(paste(gsub("\\.{3}[0-9]*$", "", names(tmp.data)[!is.na(tmp.data[1,])]), collapse = "|"), names(tmp.data))])
-      names(tmp.data)[!is.na(tmp.data[1,])] <- paste(names(tmp.data)[!is.na(tmp.data[1,])], tmp.data[1,c(!is.na(tmp.data[1,]))])
-      tmp.data <- tmp.data[2:nrow(tmp.data), ]
-    }
-    names(tmp.data) <- gsub("\\.{3}[0-9]*$", "", names(tmp.data))
-    # if necessary remove square brackets
-    if (rm.bk) {
-      tmp.data[] <- lapply(tmp.data, function(x) gsub("\\s+\\[.*\\]$", "", x))
-      names(tmp.data) <- gsub(" _pink_", " (pink)", names(tmp.data))
-      names(tmp.data) <- gsub(" _white_", " (white)", names(tmp.data))
-      names(tmp.data) <- gsub("Sinistral _", "Sinistral (", names(tmp.data))
-      names(tmp.data) <- gsub(" _.*$", "", names(tmp.data))
-      names(tmp.data) <- gsub("\"", "'", names(tmp.data))
-      names(tmp.data) <- gsub("\\s+\\[.*\\]$", "", names(tmp.data))
-    }
-    #View(tmp.data)
-    
-    # create a list - choices - that once populated allows the function to run automatically
-    if (is.null(choices)) {
-      choices <- list()
-      choices$pal.lat.full <- pal.lat.full
-    }
-    # get the data
-    # reshape: work out the columns to reshape into a long format data frame ----------------------
-    if (!(gsub("_| ", "", paste("var.col", j, sep = ".")) %in% names(choices)) & (length(j) == 1 & length(grep("var.col$", names(choices), value = TRUE)) == 0)) {
-      # assume all columns are varying except depth, age, lat, long, etc.
-      tmp.var.col <- which(!grepl("Depth|Age|zone|Epoch|Latitude|Longitude|Sample label|Foram|foram|Event|Stratigraphy|Comment", names(tmp.data)))
-      # check the automation is correct
-      print(paste(c("Suggested varying columns are: ", names(tmp.data)[tmp.var.col])))
-      print(paste(c("Non varying are: ", names(tmp.data)[-tmp.var.col])))
-      check <- dlg_list(c(TRUE, FALSE), title = "Is this correct?")$res
-      while(check == FALSE) {
-        # if the automation didn't work, then do this by hand
-        print(names(tmp.data))
-        tmp.var.col <- eval(parse(text = readline("Which column numbers vary (i.e. are species): " )))
-        print(paste(c("So varying columns are: ", names(tmp.data)[tmp.var.col])))
+  if (!is.data.frame(iodp.orig.data)) {
+    for (j in choices$sheets)  {
+      tmp.data <- read_excel(file, sheet = j)
+      # if the column headings are numbers
+      if (!any(grepl("[A-z]", colnames(tmp.data)))) {
+        tmp.data <- read_excel(file, sheet = j, skip = 1)
+      }
+      # if the first row is still the column headings
+      if (length(grep("[\\(]", unlist(tmp.data[1,]))) == sum(!is.na(tmp.data[1,]))) {
+        names(tmp.data)[grepl(paste(gsub("\\.{3}[0-9]*$", "", names(tmp.data)[!is.na(tmp.data[1,])]), collapse = "|"), names(tmp.data))] <- gsub("\\.{3}[0-9]*$", "", names(tmp.data)[grepl(paste(gsub("\\.{3}[0-9]*$", "", names(tmp.data)[!is.na(tmp.data[1,])]), collapse = "|"), names(tmp.data))])
+        names(tmp.data)[!is.na(tmp.data[1,])] <- paste(names(tmp.data)[!is.na(tmp.data[1,])], tmp.data[1,c(!is.na(tmp.data[1,]))])
+        tmp.data <- tmp.data[2:nrow(tmp.data), ]
+      }
+      names(tmp.data) <- gsub("\\.{3}[0-9]*$", "", names(tmp.data))
+      # if necessary remove square brackets
+      if (rm.bk) {
+        tmp.data[] <- lapply(tmp.data, function(x) gsub("\\s+\\[.*\\]$", "", x))
+        names(tmp.data) <- gsub(" _pink_", " (pink)", names(tmp.data))
+        names(tmp.data) <- gsub(" _white_", " (white)", names(tmp.data))
+        names(tmp.data) <- gsub("Sinistral _", "Sinistral (", names(tmp.data))
+        names(tmp.data) <- gsub(" _.*$", "", names(tmp.data))
+        names(tmp.data) <- gsub("\"", "'", names(tmp.data))
+        names(tmp.data) <- gsub("\\s+\\[.*\\]$", "", names(tmp.data))
+      }
+      #View(tmp.data)
+      
+      # create a list - choices - that once populated allows the function to run automatically
+      if (is.null(choices)) {
+        choices <- list()
+        choices$pal.lat.full <- pal.lat.full
+      }
+      # get the data
+      # reshape: work out the columns to reshape into a long format data frame ----------------------
+      if (!(gsub("_| ", "", paste("var.col", j, sep = ".")) %in% names(choices)) & (length(j) == 1 & length(grep("var.col$", names(choices), value = TRUE)) == 0)) {
+        # assume all columns are varying except depth, age, lat, long, etc.
+        tmp.var.col <- which(!grepl("Depth|Age|zone|Epoch|Latitude|Longitude|Sample label|Foram|foram|Event|Stratigraphy|Comment", names(tmp.data)))
+        # check the automation is correct
+        print(paste(c("Suggested varying columns are: ", names(tmp.data)[tmp.var.col])))
+        print(paste(c("Non varying are: ", names(tmp.data)[-tmp.var.col])))
         check <- dlg_list(c(TRUE, FALSE), title = "Is this correct?")$res
-      }
-    } else {
-      if (!is.null(choices$var.col)) {
-        # if one sheet
-        tmp.var.col <- choices$var.col
+        while(check == FALSE) {
+          # if the automation didn't work, then do this by hand
+          print(names(tmp.data))
+          tmp.var.col <- eval(parse(text = readline("Which column numbers vary (i.e. are species): " )))
+          print(paste(c("So varying columns are: ", names(tmp.data)[tmp.var.col])))
+          check <- dlg_list(c(TRUE, FALSE), title = "Is this correct?")$res
+        }
       } else {
-        # if multiple sheets
-        tmp.var.col <- choices[paste("var.col.", gsub("_|\\s", "", j), sep = "")][[1]]
-      }
-    }
-    names(tmp.data) <- gsub("__.$", "", names(tmp.data))
-    # if some of the columns are duplicated
-    if (length(unique(colnames(tmp.data)[tmp.var.col])) != length(tmp.var.col)) {
-      dup.col <- which(duplicated(colnames(tmp.data)))
-      uniq.col <- unique(colnames(tmp.data)[tmp.var.col])
-      print("Duplicated columns:")
-      print(colnames(tmp.data)[dup.col])
-      if (is.null(choices$merge))
-        choices$merge <- dlg_list(c("Yes", "No"), title = "Do you want to merge the duplicated columns?")$res
-      if (choices$merge == "Yes") {
-        for (i in unique(colnames(tmp.data)[dup.col])) {
-          colnames(tmp.data)[colnames(tmp.data) == i] <- paste(i, " [", 1:length(colnames(tmp.data)[colnames(tmp.data) == i]), "]", sep = "")
+        if (!is.null(choices$var.col)) {
+          # if one sheet
+          tmp.var.col <- choices$var.col
+        } else {
+          # if multiple sheets
+          tmp.var.col <- choices[paste("var.col.", gsub("_|\\s", "", j), sep = "")][[1]]
         }
       }
+      names(tmp.data) <- gsub("__.$", "", names(tmp.data))
+      # if some of the columns are duplicated
+      if (length(unique(colnames(tmp.data)[tmp.var.col])) != length(tmp.var.col)) {
+        dup.col <- which(duplicated(colnames(tmp.data)))
+        uniq.col <- unique(colnames(tmp.data)[tmp.var.col])
+        print("Duplicated columns:")
+        print(colnames(tmp.data)[dup.col])
+        if (is.null(choices$merge))
+          choices$merge <- dlg_list(c("Yes", "No"), title = "Do you want to merge the duplicated columns?")$res
+        if (choices$merge == "Yes") {
+          for (i in unique(colnames(tmp.data)[dup.col])) {
+            colnames(tmp.data)[colnames(tmp.data) == i] <- paste(i, " [", 1:length(colnames(tmp.data)[colnames(tmp.data) == i]), "]", sep = "")
+          }
+        }
+      }
+      if (length(choices$sheets) > 1) {
+        tmp.data$row.num <- paste("R", which(choices$sheets == j), ".", 1:nrow(tmp.data), sep = "")
+      } else {
+        tmp.data$row.num <- paste("R", 1:nrow(tmp.data), sep = "")
+      }
+      # reshape the data
+      names(tmp.data)[duplicated(names(tmp.data))] <- paste(names(tmp.data)[duplicated(names(tmp.data))], "1", sep = "_")
+      if (length(tmp.var.col) > 1) {
+        assign(paste("dataset", gsub(" ", "_", j), sep = "."), gather(tmp.data, Species, rel.abun, colnames(tmp.data)[tmp.var.col]))
+      } else {
+        assign(paste("dataset", gsub(" ", "_", j), sep = "."), gather(tmp.data, Species, rel.abun, colnames(tmp.data)[eval(parse(text = tmp.var.col))]))
+      }
+      if (!any(grepl(paste("var.col", j, sep = "."), names(choices)))) {
+        choices <- c(choices, list(tmp.var.col))
+        names(choices)[length(choices)] <- gsub("_| ", "", paste("var.col", j, sep = "."))
+      }
     }
-    if (length(choices$sheets) > 1) {
-      tmp.data$row.num <- paste("R", which(choices$sheets == j), ".", 1:nrow(tmp.data), sep = "")
-    } else {
-      tmp.data$row.num <- paste("R", 1:nrow(tmp.data), sep = "")
-    }
-    # reshape the data
-    names(tmp.data)[duplicated(names(tmp.data))] <- paste(names(tmp.data)[duplicated(names(tmp.data))], "1", sep = "_")
-    if (length(tmp.var.col) > 1) {
-      assign(paste("dataset", gsub(" ", "_", j), sep = "."), gather(tmp.data, Species, rel.abun, colnames(tmp.data)[tmp.var.col]))
-    } else {
-      assign(paste("dataset", gsub(" ", "_", j), sep = "."), gather(tmp.data, Species, rel.abun, colnames(tmp.data)[eval(parse(text = tmp.var.col))]))
-    }
-    if (!any(grepl(paste("var.col", j, sep = "."), names(choices)))) {
-      choices <- c(choices, list(tmp.var.col))
-      names(choices)[length(choices)] <- gsub("_| ", "", paste("var.col", j, sep = "."))
-    }
+    orig.data <- eval(parse(text = paste("bind_rows(", paste(grep("dataset", ls(), value = TRUE), collapse = ","), ")", sep = "")))
+  } else {
+    orig.data <- iodp.orig.data
   }
-  data <- eval(parse(text = paste("bind_rows(", paste(grep("dataset", ls(), value = TRUE), collapse = ","), ")", sep = "")))
+  
+  data <- orig.data
   
   # print to check
   print(head(data))
@@ -2559,16 +2565,35 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
   }
   data <- cbind(data, year = as.numeric(choices$year))
   # age model -------------------
-  age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", gsub("^.*(.)\\.xlsx$|^.*(.)\\.xls$", "\\1", tmp.file), "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
-  if (any(!grepl("xlsx", age.file)))
-    age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
-  if (length(age.file) > 1)
-    age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", gsub("^.*([A-Z])\\.xl.*$", "\\1", file), "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
-  if (any(!grepl("\\.xl.*$", age.file)))
-    age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~][^A-Z]*", "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
-  if (any(grepl("xls", age.file))) {
-    data.age <- read_excel(age.file[1])
+  if (is.data.frame(age.chron)) {
+    age.file <- grep(paste("^[^~].*", gsub("^.*(.)\\.xlsx$|^.*(.)\\.xls$", "\\1", tmp.file), "_chrono", sep = ""), grep(gsub("[^/]*$", "", file), age.chron$file, value = TRUE), value = TRUE)
+    if (any(!grepl("xlsx", age.file))) {
+      browser()
+      age.file <- grep(gsub("[^/]*$", "", file), age.chron$file, value = TRUE)
+    }
+    if (length(age.file) > 1) {
+      age.file <- grep(paste("^[^~].*", gsub("^.*([A-Z])\\.xl.*$", "\\1", file), "_chrono", sep = ""), grep(gsub("[^/]*$", "", file), age.chron$file, value = TRUE), value = TRUE)
+    }
+    if (any(!grepl("\\.xl.*$", age.file))) {
+      browser()      
+      age.file <- grep(paste("^[^~][^A-Z]*", "_chrono", sep = ""), grep(gsub("[^/]*$", "", file), age.chron$file, value = TRUE), value = TRUE)
+    }
+    if (any(grepl("xls", age.file))) {
+      data.age <- age.chron$chron[age.chron$file == age.file[1]][[1]]
+      #View(data.age)
+    }
+  } else {
+    age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", gsub("^.*(.)\\.xlsx$|^.*(.)\\.xls$", "\\1", tmp.file), "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
+    if (any(!grepl("xlsx", age.file)))
+      age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
+    if (length(age.file) > 1)
+      age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*", gsub("^.*([A-Z])\\.xl.*$", "\\1", file), "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
+    if (any(!grepl("\\.xl.*$", age.file)))
+      age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~][^A-Z]*", "_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
+    if (any(grepl("xls", age.file))) {
+      data.age <- read_excel(age.file[1])
     #View(data.age)
+    }
   }
   if (is.null(choices$age.model)) {
     if (any(grepl("data.age", ls()))) {
@@ -2733,43 +2758,43 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
   if (is.null(choices$latitude)) {
     check <- FALSE
     while(check == FALSE) {
-      if (any(IODP.info$Leg == unique(choices$leg))) {
+      if (any(iodp.info$Leg == unique(choices$leg))) {
         tmp.leg <- unique(choices$leg)
       } else {
-        tmp.leg <- unique(grep(unique(choices$leg), IODP.info$Leg, value = TRUE))
+        tmp.leg <- unique(grep(unique(choices$leg), iodp.info$Leg, value = TRUE))
       }
-      if (any(IODP.info$Site == unique(choices$site))) {
+      if (any(iodp.info$Site == unique(choices$site))) {
         tmp.site <- unique(choices$site)
       } else {
-        tmp.site <- unique(grep(gsub("^[A-z]", "", unique(choices$site)), IODP.info$Site, value = TRUE))
+        tmp.site <- unique(grep(gsub("^[A-z]", "", unique(choices$site)), iodp.info$Site, value = TRUE))
       }
       tmp.hole <- gsub("^[A-z]", "", unique(choices$hole))
       # if there is more than one hole
       if (length(tmp.hole) > 1) {
         for(i in 1:length(tmp.hole)) 
-          tmp.hole[i] <- ifelse(length(unique(grep(tmp.hole[i], IODP.info$Hole, value = TRUE))) > 0, unique(grep(tmp.hole[i], IODP.info$Hole, value = TRUE)), NA)
+          tmp.hole[i] <- ifelse(length(unique(grep(tmp.hole[i], iodp.info$Hole, value = TRUE))) > 0, unique(grep(tmp.hole[i], iodp.info$Hole, value = TRUE)), NA)
         tmp.hole <- tmp.hole[!is.na(tmp.hole)]
         choices$longitude <- choices$latitude <- rep(NA, length(tmp.hole))
         for(j in 1:length(tmp.hole)) {
-          choices$latitude[j] <- IODP.info$DecLat[IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole[j], "$", sep = ""), IODP.info$Hole)]
-          choices$longitude[j] <- IODP.info$DecLong[IODP.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), IODP.info$Hole)] 
-          names(choices$latitude)[j] <- names(choices$longitude)[j] <- IODP.info$Hole[IODP.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), IODP.info$Hole)]
+          choices$latitude[j] <- iodp.info$DecLat[iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole[j], "$", sep = ""), iodp.info$Hole)]
+          choices$longitude[j] <- iodp.info$DecLong[iodp.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), iodp.info$Hole)] 
+          names(choices$latitude)[j] <- names(choices$longitude)[j] <- iodp.info$Hole[iodp.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), iodp.info$Hole)]
         }
       } else {
-        if (any(IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole, collapse = "|"), IODP.info$Hole))) {
-          if (length(grep(paste(tmp.hole, collapse = "|"), IODP.info$Hole)) > 1) {
-            choices$latitude <- IODP.info$DecLat[IODP.info$Leg == tmp.leg & IODP.info$Hole == tmp.hole]
-            choices$longitude <- IODP.info$DecLong[IODP.info$Leg == tmp.leg & IODP.info$Hole == tmp.hole] 
-            names(choices$latitude) <- names(choices$longitude) <- IODP.info$Hole[IODP.info$Leg == tmp.leg & IODP.info$Hole == tmp.hole]
+        if (any(iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole, collapse = "|"), iodp.info$Hole))) {
+          if (length(grep(paste(tmp.hole, collapse = "|"), iodp.info$Hole)) > 1) {
+            choices$latitude <- iodp.info$DecLat[iodp.info$Leg == tmp.leg & iodp.info$Hole == tmp.hole]
+            choices$longitude <- iodp.info$DecLong[iodp.info$Leg == tmp.leg & iodp.info$Hole == tmp.hole] 
+            names(choices$latitude) <- names(choices$longitude) <- iodp.info$Hole[iodp.info$Leg == tmp.leg & iodp.info$Hole == tmp.hole]
           } else {
-            choices$latitude <- IODP.info$DecLat[IODP.info$Leg == tmp.leg & grepl(tmp.hole, IODP.info$Hole)]
-            choices$longitude <- IODP.info$DecLong[IODP.info$Leg == tmp.leg &  grepl(tmp.hole, IODP.info$Hole)] 
-            names(choices$latitude) <- names(choices$longitude) <- IODP.info$Hole[IODP.info$Leg == tmp.leg &  grepl(tmp.hole, IODP.info$Hole)]
+            choices$latitude <- iodp.info$DecLat[iodp.info$Leg == tmp.leg & grepl(tmp.hole, iodp.info$Hole)]
+            choices$longitude <- iodp.info$DecLong[iodp.info$Leg == tmp.leg &  grepl(tmp.hole, iodp.info$Hole)] 
+            names(choices$latitude) <- names(choices$longitude) <- iodp.info$Hole[iodp.info$Leg == tmp.leg &  grepl(tmp.hole, iodp.info$Hole)]
           }
         } else {
-          choices$latitude <- IODP.info$DecLat[IODP.info$Leg == tmp.leg & IODP.info$Site == tmp.site]
-          choices$longitude <- IODP.info$DecLong[IODP.info$Leg == tmp.leg & IODP.info$Site == tmp.site] 
-          names(choices$latitude) <- names(choices$longitude) <- IODP.info$Hole[IODP.info$Leg == tmp.leg & IODP.info$Site == tmp.site]
+          choices$latitude <- iodp.info$DecLat[iodp.info$Leg == tmp.leg & iodp.info$Site == tmp.site]
+          choices$longitude <- iodp.info$DecLong[iodp.info$Leg == tmp.leg & iodp.info$Site == tmp.site] 
+          names(choices$latitude) <- names(choices$longitude) <- iodp.info$Hole[iodp.info$Leg == tmp.leg & iodp.info$Site == tmp.site]
         }
       }
       print(paste("So latitude: ", choices$latitude, sep = ""))
@@ -2803,21 +2828,21 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
       if (length(tmp.hole) > 1) {
         choices$water.depth <- rep(NA, length(tmp.hole))
         for(j in 1:length(tmp.hole)) {
-          choices$water.depth[j] <- IODP.info$mbsl[IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole[j], "$", sep = ""), IODP.info$Hole)]
-          names(choices$water.depth)[j] <- IODP.info$Hole[IODP.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), IODP.info$Hole)]
+          choices$water.depth[j] <- iodp.info$mbsl[iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole[j], "$", sep = ""), iodp.info$Hole)]
+          names(choices$water.depth)[j] <- iodp.info$Hole[iodp.info$Leg == tmp.leg &  grepl(paste(tmp.hole[j], "$", sep = ""), iodp.info$Hole)]
         }
       } else {
-        if (any(IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole, collapse = "|"), IODP.info$Hole))) {
-          if (length(grepl(tmp.hole, IODP.info$Hole)) > 1) {
-            choices$water.depth <- IODP.info$mbsl[IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole, "$", sep = ""), IODP.info$Hole)]
-            names(choices$water.depth) <- IODP.info$Hole[IODP.info$Leg == tmp.leg & grepl(paste(tmp.hole, "$", sep = ""), IODP.info$Hole)]
+        if (any(iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole, collapse = "|"), iodp.info$Hole))) {
+          if (length(grepl(tmp.hole, iodp.info$Hole)) > 1) {
+            choices$water.depth <- iodp.info$mbsl[iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole, "$", sep = ""), iodp.info$Hole)]
+            names(choices$water.depth) <- iodp.info$Hole[iodp.info$Leg == tmp.leg & grepl(paste(tmp.hole, "$", sep = ""), iodp.info$Hole)]
           } else {
-            choices$water.depth <- IODP.info$mbsl[IODP.info$Leg == tmp.leg & grepl(tmp.hole, IODP.info$Hole)]
-            names(choices$water.depth) <- IODP.info$Hole[IODP.info$Leg == tmp.leg & grepl(tmp.hole, IODP.info$Hole)]
+            choices$water.depth <- iodp.info$mbsl[iodp.info$Leg == tmp.leg & grepl(tmp.hole, iodp.info$Hole)]
+            names(choices$water.depth) <- iodp.info$Hole[iodp.info$Leg == tmp.leg & grepl(tmp.hole, iodp.info$Hole)]
           }
         } else {
-          choices$water.depth <- IODP.info$mbsl[IODP.info$Leg == tmp.leg & IODP.info$Site == tmp.site]
-          names(choices$water.depth) <- IODP.info$Hole[IODP.info$Leg == tmp.leg & IODP.info$Site == tmp.site]
+          choices$water.depth <- iodp.info$mbsl[iodp.info$Leg == tmp.leg & iodp.info$Site == tmp.site]
+          names(choices$water.depth) <- iodp.info$Hole[iodp.info$Leg == tmp.leg & iodp.info$Site == tmp.site]
         }
       }
       print(paste("So water depth: ", unique(choices$water.depth), " m", sep = ""))
@@ -3001,20 +3026,35 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
   # if the age is in an external table -----------------------
   if (all(is.na(data$age)) & all (is.na(data$zone)) | recalc.age) {
     tmp.hole <- gsub("^[A-z]", "", unique(choices$hole))
-    age.file <- paste(gsub("[^/]*$", "", file), grep(paste("^[^~].*_chrono", sep = ""), list.files(gsub("[^/]*$", "", file)), value = TRUE), sep = "")
+    age.file <- grep(paste("^[^~].*_chrono", sep = ""), grep(gsub("[^/]*$", "", file), age.chron$file, value = TRUE), value = TRUE)
     
     # for each hole, 
       for (i in 1:length(tmp.hole)) {
         # get the external age files
-        if ((length(tmp.hole) != 1 | length(age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))]) != 1) & length(age.file) > 1) {
-          data.age <- read_excel(age.file[1])
-          for (j in 2:length(age.file))
-            data.age <- merge(data.age, read_excel(age.file[j]), all.x = TRUE, all.y = TRUE)
-        } else {
-          if (length(age.file) > 1) {
-            data.age <- read_excel(age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))])
+        if (is.data.frame(age.chron)) {
+          if ((length(tmp.hole) != 1 | length(age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))]) != 1) & length(age.file) > 1) {
+            data.age <- age.chron$chron[age.chron$file == age.file[1]][[1]]
+            for (j in 2:length(age.file)) {
+              data.age <- merge(data.age, age.chron$chron[age.chron$file == age.file[j]][[1]], all.x = TRUE, all.y = TRUE)
+            }
           } else {
-            data.age <- read_excel(age.file)
+            if (length(age.file) > 1) {
+              data.age <- age.chron$chron[age.chron$file == age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))]][[1]]
+            } else {
+              data.age <- age.chron$chron[age.chron$file == age.file][[1]]
+            }
+          }
+        } else {
+          if ((length(tmp.hole) != 1 | length(age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))]) != 1) & length(age.file) > 1) {
+            data.age <- read_excel(age.file[1])
+            for (j in 2:length(age.file))
+              data.age <- merge(data.age, read_excel(age.file[j]), all.x = TRUE, all.y = TRUE)
+          } else {
+            if (length(age.file) > 1) {
+              data.age <- read_excel(age.file[grep(paste(tmp.hole[1], "chrono", sep = ""), gsub("_", "", age.file))])
+            } else {
+              data.age <- read_excel(age.file)
+            }
           }
         }
         # if one of the columns is the hole
@@ -3057,7 +3097,6 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
           #   }
           #   rm(k)
           }
-          
           data.age <- merge(data.age, chrons.full, by.x = c("orig.chron", "orig.age"), by.y = c("orig.chron", "Original.age"), all.x = TRUE)
           if (any(is.na(data.age$Original.event) & data.age$orig.chron != "Gap"))
             browser()
@@ -3716,7 +3755,7 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
   # return restructured dataframe
   col.inc <- c("rowID", "species", "orig.species", "abundance", "orig.abundance", "abun.units", "sample.depth", "segment", "age", "age.err", "age.calc", "zone", "zon.age", "age.st", "age.en", "rng.age", "int.age", "err.int.age", "mag.zone", "mag.age.st", "mag.age.en", "mag.age", "int.mag.age", "err.int.mag.age", "mod.age", "r2", "n.pts", "age.model", "AM.type", "latitude", "longitude", "pal.lat", "pal.long", "water.depth", "db.source", "dbID", "holeID", "sampleID", "reason", "leg", "site", "hole", "core", "section", "sample.top", "sample.type", "total.IDd", "preservation", "processing", "person", "date", "year", "source")
   
-  final.data <- list(data = data[, col.inc], choices = choices)
+  final.data <- list(data = data[, col.inc], choices = choices, orig.data = orig.data)
   return(final.data)
 }
 
@@ -4406,3 +4445,25 @@ depth.calc <- function(x, tmp.depth) {
     return((tmp.depth$samples[x] - tmp.depth$samples[lower.d]) * (tmp.depth$orig.depth[lower.d]) / (tmp.depth$samples[lower.d]) + tmp.depth$orig.depth[lower.d])
 }
 
+
+# Function for fraction of range occupied ---------------------------------
+age.frac <- function(species, sp.data, occ.data, bin.width) {
+  # for a species, identify start and end dates
+  t.start <- sp.data$Start[sp.data$species == species]
+  t.end <- sp.data$End[sp.data$species == species]
+  
+  # generate a sequence based on bin widths from start to end
+  sp.seq <- seq(t.end, t.start, by = 1)
+  if (bin.width > 1) {
+    sp.seq <- unique(round(sp.seq / bin.width) * bin.width)
+  }
+  
+  # round occurrence data to the bin categories
+  bin.occ <- unique(round(occ.data$age[occ.data$species == species] / bin.width) * bin.width)
+  
+  # only include ages within the expected range
+  bin.occ <- bin.occ[bin.occ >= min(sp.seq) & bin.occ <= max(sp.seq)]
+  
+  # check what fraction of possible ages are filled by the bin categories for that species
+  return(length(bin.occ) / length(sp.seq))
+}

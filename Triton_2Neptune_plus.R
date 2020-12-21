@@ -14,15 +14,14 @@ library(svDialogs)
 library(tidyverse)
 library(measurements) # convert to decimal degrees
 
-source("Code/PNstructure.R") # code to read in the data
-
-#load("Outputs/Paleomaps/CenozoicMaps.RData") # paleomap reconstructions
+source("Code/Triton_PNstructure.R")
+source("Code/Triton_ForamSynonyms.R")
 
 # 1. NEPTUNE -------------------------------------------------------------
 load("Outputs/Neptune.RData")
 
 # load in the neptune data
-neptune.orig <- read.xlsx("Data/190314 Neptune forams Cenozoic.xlsx")
+neptune.orig <- read.xlsx("Data/DB_NeptuneCenozoic.xlsx")
 
 # check the abundances
 sort(unique(strtrim(neptune.orig$Taxon.Abundance, 3)))
@@ -99,7 +98,7 @@ sort(unique(neptune$data$total.IDd))
 # if re-running load in the data
 load("Outputs/forcens.RData")
 
-forcens.orig <- read.xlsx("Data/ForCenS.xlsx", sheet = "ForCenSred", na.strings = c("N/A"))
+forcens.orig <- read.xlsx("Data/DB_ForCenS.xlsx", sheet = "ForCenSred", na.strings = c("N/A"))
 
 names(forcens.orig) <- gsub("\\.", " ", names(forcens.orig))
 
@@ -151,7 +150,7 @@ summary(with(forcens$data[forcens$data$abun.units == "Relative abundance",], tap
 # if re-running
 load("Outputs/eocene_IF_PhD.RData")
 
-eoc <- read.xlsx("Data/EocOlFullRef.xlsx")
+eoc <- read.xlsx("Data/DB_FentonEtAl2016.xlsx")
 eoc$sample.ID <- NA
 eoc$sample.ID[order(eoc$Location)] <- paste("S", unlist(lapply(table(eoc$Location), function(x) seq(1, x, 1))), sep = "")
 
@@ -225,7 +224,7 @@ eoc3$data$source[grepl("Pacific|Atlantic|Indian|Antarctic", eoc3$data$source)] <
 # 4. Extra datasets -------------------------------------------------------
 # if re-running
 load("Outputs/GIK179557_2.RData")
-tmp.dat <- read_excel("Data/GIK17957-2.xlsx")
+tmp.dat <- read_excel("Data/DB_GIK17957-2.xlsx")
 tmp.dat$row.num  <- paste("R", 1:nrow(tmp.dat), sep = "")
 tmp.dat <- pivot_longer(tmp.dat, 3:27, "species")
 head(tmp.dat)

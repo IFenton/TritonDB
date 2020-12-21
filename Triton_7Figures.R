@@ -187,7 +187,7 @@ table(foram.data$round.pal.lat[foram.data$age <= 0.0017])
 
 # 5. Diversity through time -----------------------------------------------
 png("Figures/Diversity.png")
-plot(c(0, 66), c(0, 120), type = "n", xlab = "Age / Ma", ylab = "Species richness", bty = "l", main = "Triton", las = 1, cex.lab = 1.5)
+plot(c(0, 66), c(0, 170), type = "n", xlab = "Age / Ma", ylab = "Species richness", bty = "l", main = "Triton", las = 1, cex.lab = 1.5)
 abline(v = c(2.59, 5.33, 23.03, 33.9, 56), col = "grey70")
 tmp.y <- NULL
 for (i in 1:66) {
@@ -227,22 +227,21 @@ rm(i, tmp.y)
 
 # 6. Example age model ----------------------------------------------------
 iodp.files <- grep("^(?=.*\\.xls)(?!.*chron)", list.files("Data/IODP extras", recursive = TRUE), value = TRUE, perl = TRUE)
-model.type <- read_xlsx("Data/iodp_age_models.xlsx")
+model.type <- read_xlsx("Data/age_models.xlsx", sheet = "iodp")
 # if re-running load in the previous data
-load("Outputs/IODP_separate.RData")
-i <- grep("1499A", iodp.files, value = TRUE)
-tmp.path <- paste("Data/IODP extras/", i, sep = "")
-tmp.file <- paste("iodp", gsub("/|-| |\\+", "_", i), sep = "")
-assign("choices_iodp", eval(parse(text = paste(tmp.file, "$choices"))))
+load("Outputs/IODP_sep.RData")
+i <- grep("1499A", iodp.data$file)
+# tmp.path <- paste("Data/IODP extras/", i, sep = "")
+# tmp.file <- paste("iodp", gsub("/|-| |\\+", "_", i), sep = "")
 # age plots
-tmp.dat <- eval(parse(text = paste0(tmp.file, "$data[!duplicated(", tmp.file, "$data$sampleID), ]")))
+tmp.dat <- iodp.data$new.dat[[i]][!duplicated(iodp.data$new.dat[[i]]$sampleID), ]
 tmp.dat <- tmp.dat[order(tmp.dat$sample.depth),]
-tmp.full <- all.chrons[all.chrons$`Age notes` %in% c(NA, unique(as.character(eval(parse(text = paste0(tmp.file, "$choices$zones.tab$ocean"))))), unique(as.character(eval(parse(text = paste0(tmp.file, "$choices$zones.tab$region")))))), ]
+tmp.full <- all.chrons[all.chrons$`Age notes` %in% c(NA, unique(as.character(iodp.data$choices[[i]]$zones.tab$ocean)), unique(as.character(iodp.data$choices[[i]]$zones.tab$region))), ]
 
 j <- unique(tmp.dat$hole)
 j <- gsub("^U|^C|^M", "", j)
 
-tmp.age <- merge(eval(parse(text = paste0(tmp.file, "$choices$data.age_", j))), tmp.full, all.x = TRUE)
+tmp.age <- merge(eval(parse(text = paste0("iodp.data$choices[[i]]$data.age_", j))), tmp.full, all.x = TRUE)
 tmp.age <- tmp.age[order(tmp.age[, names(tmp.age) == j], tmp.age$Age), ]
 
 png("Figures/Age1499A.png", 600, 600)
@@ -291,7 +290,7 @@ datasp$pal.long.range <- datasp$max.pal.long - datasp$min.pal.long
 datasp$nMa.rec <- tapply(foram.data$round.age, foram.data$species, function(x) length(unique(x)))[datasp$species]
 
 # consider fraction of data completeness at given bin widths
-summary(sapply(datasp$specName, age.frac, datasp, foram.data, 1))
+summary(sapply(datasp$species, age.frac, datasp, foram.data, 1))
 
 
 # fully trimmed dataset

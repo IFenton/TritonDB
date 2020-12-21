@@ -10,7 +10,7 @@ library(tidyverse)
 
 # 1. Convert the foram ages to GTS 2020 --------------------------------------------
 # load in the speciation / extinction ages
-foram.ages <- read.xlsx("Data/PF ages.xlsx", sheet = "Final") 
+foram.ages <- read.xlsx("Data/PFdata.xlsx", sheet = "PFages") 
 head(foram.ages)
 summary(foram.ages)
 
@@ -67,7 +67,7 @@ foram.ages$End[foram.ages$orig.ts == "GTS2012"] <- unlist(sapply(foram.ages$orig
 
 # 3. Update the chrons -------------------------------------
 # load in the updated stratigraphic markers
-all.chrons <- read_xlsx("Data/BiostratAges.xlsx", sheet = "Final", na = "NA")
+all.chrons <- read_xlsx("Data/Ages.xlsx", sheet = "UpdatedAges", na = "NA")
 names(all.chrons) <- gsub(" ", ".", names(all.chrons))
 all.chrons$corr.chron <- paste(all.chrons$Corrected.Event.type, all.chrons$Corrected.event)
 
@@ -87,7 +87,7 @@ all.chrons$Age[all.chrons$orig == 0 & !is.na(all.chrons$orig)] <- 0
 
 
 # 4. Compile the synonymy list --------------------------------------------
-chrons.syn <- read_xlsx("Data/Biostrat synonymy.xlsx", sheet = "Final", na = "NA", col_types = "text")
+chrons.syn <- read_xlsx("Data/Ages.xlsx", sheet = "Synonymy", na = "NA", col_types = "text")
 names(chrons.syn) <- gsub(" ", ".", names(chrons.syn))
 chrons.syn$Original.age[suppressWarnings(!is.na(as.numeric(chrons.syn$Original.age)))] <- suppressWarnings(as.numeric(chrons.syn$Original.age)[!is.na(as.numeric(chrons.syn$Original.age))]) 
 chrons.syn <- chrons.syn[, c("Corrected.Type", "orig.chron", "Corrected.event", "Corrected.Event.type", "Original.age")]
@@ -114,7 +114,7 @@ head(all.chrons)
 
 # 5. Update zones ---------------------------------------------------------
 # load in zones
-all.zones <- read_excel("Data/BiostratSchemes.xlsx", sheet = "Zones", na = "NA", col_types = c(rep("text", 2), "numeric", "text", rep("numeric", 2), rep("text", 4)))
+all.zones <- read_excel("Data/Ages.xlsx", sheet = "Zones", na = "NA", col_types = c(rep("text", 2), "numeric", "text", rep("numeric", 2), rep("text", 4)))
 head(all.zones)
 
 # add in columns for the ocean
@@ -165,4 +165,4 @@ na.chrons <- which(is.na(all.chrons$corr.chron))
 all.chrons$corr.chron[na.chrons] <- paste(all.chrons$Corrected.Event.type[na.chrons], all.chrons$Corrected.event[na.chrons])
 all.chrons$Age[na.chrons] <- all.chrons$Age[-na.chrons][match(all.chrons$corr.chron[na.chrons], all.chrons$corr.chron[-na.chrons])]
 
-rm(all.events, chrons.mag.syn, chrons.new.syn, chrons.syn, foram.events, na.chrons, magneto.ts, PFzones.ts, zone.chrons, ts.conv)
+rm(all.events, chrons.mag.syn, chrons.new.syn, chrons.syn, foram.events, na.chrons, PFzones.ts, zone.chrons)
