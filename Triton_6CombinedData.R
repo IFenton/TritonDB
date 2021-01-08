@@ -12,6 +12,10 @@ library(svDialogs) # e.g. dlg_list
 library(openxlsx)
 
 # 1. Combine the different datasets ---------------------------------------------------------
+# load("Outputs/Neptune_plus.RData") # for res.sp1
+# load("Outputs/res_sp2.RData") # for res.sp2c
+# load("Outputs/MoveDB.RData") # for res.sp3
+# load("Outputs/res_sp4.RData") # for res.sp4
 triton <- rbind(res.sp1, res.sp2c, res.sp3[res.sp3$dbID != "DSMoveDB", ], res.sp4)
 
 str(triton)

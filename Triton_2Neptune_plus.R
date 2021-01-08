@@ -148,7 +148,7 @@ summary(with(forcens$data[forcens$data$abun.units == "Relative abundance",], tap
 
 # 3. Eocene data --------------------------------------------------
 # if re-running
-load("Outputs/eocene_IF_PhD.RData")
+load("Outputs/FentonEtAl2016.RData")
 
 eoc <- read.xlsx("Data/DB_FentonEtAl2016.xlsx")
 eoc$sample.ID <- NA
@@ -218,7 +218,7 @@ eoc3$data$sample.type[is.na(eoc3$data$leg)] <- "Terrestrial"
 # update sources
 eoc3$data$source[grepl("Pacific|Atlantic|Indian|Antarctic", eoc3$data$source)] <- eoc3$data$holeID[grepl("Pacific|Atlantic|Indian|Antarctic", eoc3$data$source)]
 
-# save(eoc, eoc2, eoc3, file = "Outputs/eocene_IF_PhD.RData")
+# save(eoc, eoc2, eoc3, file = "Outputs/FentonEtAl2016.RData")
 
 
 # 4. Extra datasets -------------------------------------------------------
