@@ -21,7 +21,7 @@ PNstructure <- function(data, input.init, database.source, ODP = "Y", sheet.no =
   library(mapast)
   
   library(sp)
-  source("Code/Triton_ForamSynonyms.R")
+  #source("Code/Triton_ForamSynonyms.R")
   
   # create a choices list
   if (is.null(choices)) {
@@ -1144,7 +1144,7 @@ pan.PNstructure <- function(pan.data, input.init, choices = NULL, model = "MATTH
   library(openxlsx)
   #install_github("macroecology/mapast")
   library(mapast)
-  source("Code/Triton_ForamSynonyms.R")
+  #source("Code/Triton_ForamSynonyms.R")
   library(tidyverse)
   library(readxl)
   library(sp)
@@ -2413,7 +2413,7 @@ iodp.PNstructure <- function (file, input.init, choices = NULL, model = "MATTHEW
   library(openxlsx)
   #install_github("macroecology/mapast")
   library(mapast)
-  source("Code/Triton_ForamSynonyms.R")
+  #source("Code/Triton_ForamSynonyms.R")
   library(tidyverse)
   library(readxl)
   library(sp)
@@ -4449,8 +4449,8 @@ depth.calc <- function(x, tmp.depth) {
 # Function for fraction of range occupied ---------------------------------
 age.frac <- function(species, sp.data, occ.data, bin.width) {
   # for a species, identify start and end dates
-  t.start <- sp.data$Start[sp.data$species == species]
-  t.end <- sp.data$End[sp.data$species == species]
+  t.start <- sp.data$Speciation[sp.data$species == species]
+  t.end <- sp.data$Extinction[sp.data$species == species]
   
   # generate a sequence based on bin widths from start to end
   sp.seq <- seq(t.end, t.start, by = 1)

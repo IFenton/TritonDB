@@ -14,8 +14,6 @@ library(svDialogs)
 library(tidyverse)
 library(measurements) # convert to decimal degrees
 
-source("Code/Triton_PNstructure.R")
-source("Code/Triton_ForamSynonyms.R")
 
 # 1. NEPTUNE -------------------------------------------------------------
 load("Outputs/Neptune.RData")
@@ -92,7 +90,7 @@ neptune$data$total.IDd[!is.na(suppressWarnings(as.numeric(neptune$data$total.IDd
 neptune$data$total.IDd[!is.na(suppressWarnings(as.numeric(neptune$data$total.IDd))) & suppressWarnings(as.numeric(neptune$data$total.IDd)) > 3] <- "P"
 neptune$data$total.IDd[!is.na(suppressWarnings(as.numeric(neptune$data$total.IDd)))] <- "R"
 sort(unique(neptune$data$total.IDd))
-# save(neptune, neptune.orig, file = "Outputs/Neptune.RData")
+save(neptune, neptune.orig, file = "Outputs/Neptune.RData")
 
 # 2. ForCenS -------------------------------------------------------------
 # if re-running load in the data
@@ -144,7 +142,7 @@ str(forcens$data)
 # relative abundances
 summary(with(forcens$data[forcens$data$abun.units == "Relative abundance",], tapply(abundance, sampleID, sum)))
 
-# save(forcens, forcens.long, forcens.orig, file = "Outputs/forcens.RData")
+save(forcens, forcens.long, forcens.orig, file = "Outputs/forcens.RData")
 
 # 3. Eocene data --------------------------------------------------
 # if re-running
@@ -218,7 +216,7 @@ eoc3$data$sample.type[is.na(eoc3$data$leg)] <- "Terrestrial"
 # update sources
 eoc3$data$source[grepl("Pacific|Atlantic|Indian|Antarctic", eoc3$data$source)] <- eoc3$data$holeID[grepl("Pacific|Atlantic|Indian|Antarctic", eoc3$data$source)]
 
-# save(eoc, eoc2, eoc3, file = "Outputs/FentonEtAl2016.RData")
+save(eoc, eoc2, eoc3, file = "Outputs/FentonEtAl2016.RData")
 
 
 # 4. Extra datasets -------------------------------------------------------
@@ -239,7 +237,7 @@ names(tmp.dat) <- gsub("\\[|\\]", "", names(tmp.dat))
 GIK17957.2 <- PNstructure(tmp.dat, input.init = "IF", pal.lat.full = FALSE, database.source = "Pangaea", ODP = "N", choices = GIK17957.2$choices)
 GIK17957.2$data$age <- GIK17957.2$data$age / 1000 # as the age is in ka
 
-# save(GIK17957.2, file = "Outputs/GIK179557_2.RData")
+save(GIK17957.2, file = "Outputs/GIK179557_2.RData")
 rm(tmp.dat)
 
 # 5. Combine datasets ----------------------------------------------------
@@ -260,6 +258,6 @@ tapply(res.sp1$abundance, res.sp1$abun.units, summary)
 tapply(res.sp1$age, res.sp1$age.calc, summary)
 
 # 6. Tidy up --------------------------------------------------------
-# save(res.sp1, file = "Outputs/Neptune_plus.RData")
+save(res.sp1, file = "Outputs/Neptune_plus.RData")
 rm(forcens, forcens.long, forcens.orig, neptune, neptune.orig, eoc, eoc2, eoc3, GIK17957.2)
 

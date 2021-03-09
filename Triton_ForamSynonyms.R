@@ -1,18 +1,19 @@
-## function to determine names of BFD based on lookup tables provided by Tracy Aze
-## identifies correct names for macroperforate planktonic foraminifera
-## see working in BFD notes
+## function to update names based on lookup tables
+library("openxlsx")
 
 ## input - species names (can be binomial or just species name)
-## output - corrected version of that name if unknown
+## output - corrected version of that name if known
 
-compare <- function (forams.sample, micro = FALSE, st.age = NA, en.age = NA, age.check = FALSE, PF.ages = foram.ages) {
+foram.syns <- read.xlsx("Data/PFdata.xlsx", sheet = "foramslookup")
+forams.macro <- read.xlsx("Data/PFdata.xlsx", sheet = "MacroperforateSpp")[,1]
+forams.micro <- read.xlsx("Data/PFdata.xlsx", sheet = "MicroperforateSpp")[, 1]
+
+
+compare <- function (forams.sample, micro = FALSE, st.age = NA, en.age = NA, age.check = FALSE, PF.ages = foram.ages, forams.lookup = foram.syns) {
   # st.age - sample age(s), or oldest age
   # en.age - youngest age (where applicable)
   
   # load lookup tables
-  library("openxlsx")
-  path <- gsub("/[^/]*(Box|Dropbox).*/.*$", "", getwd())
-  forams.lookup <- read.xlsx("Data/PFdata.xlsx", sheet = "foramslookup")
   forams.lookup <- forams.lookup[,1:3]
   
   lookup.table <- function(lookup) {

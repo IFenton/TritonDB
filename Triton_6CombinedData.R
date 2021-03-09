@@ -116,7 +116,7 @@ pal.coord.dat <- triton[, c("round.age", "latitude", "longitude", "pal.lat", "pa
 pal.coord.dat$ID <- paste(pal.coord.dat$round.age, round(pal.coord.dat$latitude, 4), round(pal.coord.dat$longitude, 4))
 pal.coord.dat <- unique(pal.coord.dat)
 pal.coord.dat$calc <- "Yes"
-#save(pal.coord.dat, file = "Outputs/pal_coord.RData")
+save(pal.coord.dat, file = "Outputs/pal_coord.RData")
 
 
 triton$pal.lat[is.na(triton$pal.lat) & triton$age < 1] <- triton$latitude[is.na(triton$pal.lat) & triton$age < 1]
@@ -155,7 +155,7 @@ triton$trim[(triton$Extinction - triton$age) >2 & triton$age <= 23] <- "exc"
 triton.pres <- triton[triton$abundance > 0, ]
 
 # 9. Tidy up --------------------------------------------------------------
-# save(triton, triton.pres, file = "Outputs/triton.RData")
+save(triton, triton.pres, file = "Outputs/triton.RData")
 rm(res.sp1, res.sp2c, res.sp3, res.sp4, pal.coord.dat, triton.sp)
 
 

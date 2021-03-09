@@ -421,7 +421,7 @@ summary(res.sp2c)
 tapply(res.sp2c$abundance, res.sp2c$abun.units, summary)
 tapply(res.sp2c$age, res.sp2c$age.calc, summary)
 
-# save(res.sp2, res.sp2c, file = "Outputs/res_sp2.RData")
+save(res.sp2, res.sp2c, file = "Outputs/res_sp2.RData")
 
 rm(res.sp2, pan.model.type)
 

@@ -305,7 +305,7 @@ for (i in 1:nrow(iodp.data)) {
 }
 
 rm(i, j, k)
-# save(iodp.data, IODP.info, iodp.chrons, file = "Outputs/IODP_sep.RData")
+save(iodp.data, IODP.info, iodp.chrons, file = "Outputs/IODP_sep.RData")
 
 # combine all the datasets together
 res.sp4 <- do.call("rbind", iodp.data$new.dat[!is.na(iodp.data$new.dat)])
@@ -333,7 +333,7 @@ summary(res.sp4)
 
 
 # 4. Tidying data ---------------------------------------------------------
-# save(res.sp4, file = "Outputs/res_sp4.RData")
+save(res.sp4, file = "Outputs/res_sp4.RData")
 rm(tmp, iodp.chrons, iodp.data)
 
 

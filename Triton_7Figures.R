@@ -5,14 +5,18 @@
 
 # Source files / libraries ------------------------------------------------
 library(colorRamps)
+library(divDyn)
+library(tidyverse)
+library(readxl)
+detach("package:plyr", unload=TRUE)
 
 # 0. choice of dataset ----------------------------------------------
 foram.data <- triton.pres
 
 # 1. Summary info ---------------------------------------------------------
 # number of species
-length(unique(foram.data$species)) # 393
-length(unique(foram.data$species[foram.data$`Macro/micro` == "Macroperforate"])) # 339 macroperforates
+length(unique(foram.data$species)) # 394
+length(unique(foram.data$species[foram.data$`Macro/micro` == "Macroperforate"])) # 340 macroperforates
 length(unique(foram.data$species[foram.data$`Macro/micro` == "Microperforate"])) # 54 microperforates
 
 # number of records per species
@@ -213,9 +217,10 @@ trim.5.2 <- foram.data[foram.data$trim == "inc",]
 
 dim(trim.5.2)
 
+data(stages)
+
 png("Figures/Diversity_trim5_2.png")
-plot(c(0, 66), c(0, 120), type = "n", xlab = "Age / Ma", ylab = "Species richness", bty = "l", las = 1, cex.lab = 1.5)
-abline(v = c(2.59, 5.33, 23.03, 33.9, 56), col = "grey70")
+tsplot(stages, boxes=c("series","system"), shading="short", xlim=82:95, boxes.col=c("col","systemCol"), labels.args=list(cex=0.5), ylim = c(0,130))
 tmp.y <- NULL
 for (i in 1:66) {
   tmp.y <- c(tmp.y, length(unique(trim.5.2$species[trim.5.2$age >= (i-1) & trim.5.2$age < i])))
@@ -245,32 +250,34 @@ tmp.age <- merge(eval(parse(text = paste0("iodp.data$choices[[i]]$data.age_", j)
 tmp.age <- tmp.age[order(tmp.age[, names(tmp.age) == j], tmp.age$Age), ]
 
 png("Figures/Age1499A.png", 600, 600)
-plot(tmp.age[, names(tmp.age) == j] ~ tmp.age$Age, xlab = "Age", ylab = "Depth", pch = 16, type = "b", col = 4, main = j, xlim = c(min(c(unlist(tmp.dat[, c("age", "zon.age", "age.st", "age.en", "int.age", "mod.age")]), tmp.age$Age), na.rm = TRUE), max(c(unlist(tmp.dat[, c("age", "zon.age", "age.st", "age.en", "int.age", "mod.age")]), tmp.age$Age), na.rm = TRUE)), las = 1, bty = "l")
-points(tmp.dat$sample.depth ~ tmp.dat$mag.age, pch = 16, type = "b", col = 4)
+plot(tmp.age[, names(tmp.age) == j] ~ tmp.age$Age, xlab = "Age", ylab = "Depth", pch = 16, type = "b", col = 4, xlim = c(min(c(unlist(tmp.dat[, c("age", "zon.age", "age.st", "age.en", "int.age", "mod.age")]), tmp.age$Age), na.rm = TRUE), max(c(unlist(tmp.dat[, c("age", "zon.age", "age.st", "age.en", "int.age", "mod.age")]), tmp.age$Age), na.rm = TRUE)), las = 1, bty = "l")
+# magnetic age
+points(tmp.dat$sample.depth ~ tmp.dat$mag.age, pch = 16, type = "b", col = 4, cex = 1.2)
 for (k in 1:nrow(tmp.dat)) {
   lines(c(tmp.dat$mag.age.st[k], tmp.dat$mag.age.en[k]), c(tmp.dat$sample.depth[k], tmp.dat$sample.depth[k]), col = 4)
 }
 # interpolated mag ages
-points(tmp.dat$sample.depth ~ tmp.dat$int.mag.age, pch = 16, type = "b", col = 6)
-points(tmp.dat$sample.depth ~ tmp.dat$zon.age, pch = 16, type = "b")
-
+points(tmp.dat$sample.depth ~ tmp.dat$int.mag.age, pch = 16, type = "b", col = 7, cex = 1.2)
+# zone ages
+points(tmp.dat$sample.depth ~ tmp.dat$zon.age, pch = 16, type = "b", cex = 1.2)
 for (k in 1:nrow(tmp.dat)) {
   lines(c(tmp.dat$age.st[k], tmp.dat$age.en[k]), c(tmp.dat$sample.depth[k], tmp.dat$sample.depth[k]))
 }
+
 # interpolated ages
 points(tmp.dat$sample.depth ~ tmp.dat$int.age, pch = 16, type = "b", col = 2, cex = 1.2)
 # modelled ages
 points(tmp.dat$sample.depth ~ tmp.dat$mod.age, pch = 16, type = "b", col = 3, cex = 1.4)
 
-legend("bottomright", pch = 16, legend = c("Model", "Zones", "Interp", "mag", "int.mag"), col = c(3,1,2,4,6), bty = "n")
+legend("bottomright", pch = 16, legend = c("mag", "Zones", "int.mag", "Interp", "Model"), col = c(4, 1, 7, 2, 3), bty = "n", cex = 1.5)
 dev.off()
 
-
+rm(iodp.data, iodp.chrons, IODP.info)
 
 # 7. Species completeness -------------------------------------------------
 # Species level data 
 # create the species level dataframe
-datasp <- foram.ages[, c("Species.name", "Macro/micro", "Start", "End")]
+datasp <- foram.ages[, c("Species.name", "Macro/micro", "Speciation", "Extinction")]
 names(datasp)[names(datasp) == "Species.name"] <- "species"
 datasp <- datasp[order(datasp$species), ]
 sp.ord <- sort(unique(foram.data$species))
@@ -301,7 +308,7 @@ foram.data.full.trim <- foram.data.full.trim[foram.data.full.trim$Extinction - f
 tab.age <- tapply(foram.data.full.trim$round.age, foram.data.full.trim$species, function(x) length(unique(x)))
 datasp$nMa.rng <- 0
 datasp$nMa.rng[match(names(tab.age), datasp$species)] <- tab.age
-datasp$age.rng <- round(datasp$Start) - round(datasp$End) + 1
+datasp$age.rng <- round(datasp$Speciation) - round(datasp$Extinction) + 1
 datasp$frac.rng.1Ma <- datasp$nMa.rng / datasp$age.rng
 
 #at 0.5Ma bins
@@ -309,7 +316,7 @@ foram.data.full.trim$round.age.0.5 <- round(foram.data.full.trim$age * 2) / 2
 tab.age.0.5 <- tapply(foram.data.full.trim$round.age.0.5, foram.data.full.trim$species, function(x) length(unique(x)))
 datasp$nMa.rng.0.5 <- 0
 datasp$nMa.rng.0.5[match(names(tab.age.0.5), datasp$species)] <- tab.age.0.5
-datasp$age.rng.0.5 <- round(datasp$Start * 2) - round(datasp$End * 2) + 1
+datasp$age.rng.0.5 <- round(datasp$Speciation * 2) - round(datasp$Extinction * 2) + 1
 datasp$frac.rng.0.5Ma <- datasp$nMa.rng.0.5 / datasp$age.rng.0.5
 
 

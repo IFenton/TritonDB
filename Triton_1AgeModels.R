@@ -8,6 +8,9 @@ library(openxlsx)
 library(readxl) # read_excel
 library(tidyverse)
 
+source("Code/Triton_PNstructure.R")
+source("Code/Triton_ForamSynonyms.R")
+
 # 1. Convert the foram ages to GTS 2020 --------------------------------------------
 # load in the speciation / extinction ages
 foram.ages <- read.xlsx("Data/PFdata.xlsx", sheet = "PFages") 
@@ -165,4 +168,4 @@ na.chrons <- which(is.na(all.chrons$corr.chron))
 all.chrons$corr.chron[na.chrons] <- paste(all.chrons$Corrected.Event.type[na.chrons], all.chrons$Corrected.event[na.chrons])
 all.chrons$Age[na.chrons] <- all.chrons$Age[-na.chrons][match(all.chrons$corr.chron[na.chrons], all.chrons$corr.chron[-na.chrons])]
 
-rm(all.events, chrons.mag.syn, chrons.new.syn, chrons.syn, foram.events, na.chrons, PFzones.ts, zone.chrons)
+rm(all.events, chrons.mag.syn, chrons.new.syn, chrons.syn, foram.events, na.chrons, zone.chrons)
