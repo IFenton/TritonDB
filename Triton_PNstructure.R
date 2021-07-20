@@ -911,7 +911,7 @@ PNstructure <- function(data, input.init, database.source, ODP = "Y", sheet.no =
 
         # where there is no source, use the sample ID
         for (i in unique(data$sampleID)) {
-          if (any(is.na(data$abun.units[data$sampleID == i]) | data$abun.units[data$sampleID == i] == "Mixed" | choices$abun$units[choices$abun$source == unique(data$source[match(i, data$sampleID)])]) == "Mixed") {
+          if (any(is.na(data$abun.units[data$sampleID == i]) | data$abun.units[data$sampleID == i] == "Mixed" | choices$abun$units[choices$abun$source == unique(data$source[match(i, data$sampleID)])] == "Mixed")) {
             tmp <- num.abun(i, data = data, choices = choices, sample_source = "sample")
             data$abundance[data$sampleID == i] <- tmp$data
             data$abun.units[data$sampleID == i] <- choices$abun.smID$units[choices$abun.smID$source == i] <- tmp$abun.units
